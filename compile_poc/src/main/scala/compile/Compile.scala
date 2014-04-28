@@ -16,8 +16,6 @@ object Compile {
   val settings = new Settings
   settings.bootclasspath.value = libPath.mkString(File.pathSeparator)
   settings.classpath.value = libPath.mkString(File.pathSeparator)
-  println(settings.classpath);
-  println(settings.bootclasspath);
   val reporter = new ConsoleReporter(settings)
   val global = new Global(settings, reporter) with RecursiveFunctions
 
