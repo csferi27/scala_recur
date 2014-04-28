@@ -29,17 +29,17 @@ object Compile {
     compileRun.compileLate(file)
 
     //    execute phases one by one
-    var phase = compileRun.parserPhase
-    phase.run
+    global.phase = compileRun.parserPhase
+    global.phase.run
     compileRun.advancePhase
     do {
-      phase = phase.next;
+      global.phase = global.phase.next;
       println("-------------------------------------")
-      println(phase);
+      println(global.phase);
       println("-------------------------------------")
-      phase.run
+      global.phase.run
       compileRun.advancePhase
-    } while (phase.hasNext)
+    } while (global.phase.hasNext)
 
   }
 
