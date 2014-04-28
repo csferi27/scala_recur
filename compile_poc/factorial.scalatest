@@ -1,0 +1,18 @@
+package ast
+
+class Factorial {
+    def fact(n:Int):Long={
+	n match {
+           case 0 => 0
+           case 1 => 2L
+           case n => fact(n-1)
+        }
+    }
+    def fact2(n:Int)={
+	n match {
+           case 0 => 0
+           case 1 => 2L
+           case n => fact2(n-1)
+        }
+    }
+}

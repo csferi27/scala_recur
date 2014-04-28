@@ -1,0 +1,4 @@
+<plugin>
+  <name>factparser</name>
+  <classname>compileutils.FactorialParser</classname>
+</plugin>
