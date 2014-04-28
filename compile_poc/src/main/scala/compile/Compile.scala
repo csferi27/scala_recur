@@ -22,23 +22,23 @@ object Compile {
   def main(args: Array[String]) {
     import scala.reflect.runtime.universe._
 
-    val file = scala.reflect.io.AbstractFile.getFile("../../factorial.scalatest")
-    val comp = new global.Run
+    val file = scala.reflect.io.AbstractFile.getFile("/home/csajka/svn_repos/scala_recur/scala_recur/compile_poc/factorial.scalatest")
+    val compileRun = new global.Run
 
-    //    comp.compileFiles(List(file))  //runs compilation immediately
-    comp.compileLate(file)
+    //    compileRun.compileFiles(List(file)) //runs compilation immediately
+    compileRun.compileLate(file)
 
-    //execute phases one by one
-    var phase = comp.parserPhase
+    //    execute phases one by one
+    var phase = compileRun.parserPhase
     phase.run
-    comp.advancePhase
+    compileRun.advancePhase
     do {
       phase = phase.next;
       println("-------------------------------------")
       println(phase);
       println("-------------------------------------")
       phase.run
-      comp.advancePhase
+      compileRun.advancePhase
     } while (phase.hasNext)
 
   }
