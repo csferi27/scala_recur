@@ -60,7 +60,9 @@ trait MyAnalyzer extends Analyzer {
             case e: global.CyclicReference =>
               println("cyclic ident");
               cyclicReferences = ident :: cyclicReferences
-              throw e
+              UnTyper.traverse(ident)
+              ident
+            //              throw e
 
             case e: Throwable =>
               throw e
