@@ -23,12 +23,21 @@ object Compile {
     import scala.reflect.runtime.universe._
 
     val file = scala.reflect.io.AbstractFile.getFile("/home/csajka/svn_repos/scala_recur/scala_recur/compile_poc/factorial.scalatest")
-    val compileRun = new global.Run
+    //    compileAllPhasesAtOnce(file)
+    compilePhaseByPhase(file)
 
-    //    compileRun.compileFiles(List(file)) //runs compilation immediately
+  }
+
+  private def compileAllPhasesAtOnce(file: scala.reflect.io.AbstractFile): Unit = {
+    val compileRun = new global.Run
+    //    global.afterEachPhase(global.)
+    compileRun.compileFiles(List(file)) //runs compilation immediately
+  }
+
+  private def compilePhaseByPhase(file: scala.reflect.io.AbstractFile): Unit = {
+    val compileRun = new global.Run
     compileRun.compileLate(file)
 
-    //    execute phases one by one
     global.phase = compileRun.parserPhase
     global.phase.run
     compileRun.advancePhase
@@ -40,7 +49,6 @@ object Compile {
       global.phase.run
       compileRun.advancePhase
     } while (global.phase.hasNext)
-
   }
 
   private lazy val libPath = try {
@@ -62,4 +70,5 @@ object Compile {
       List(path.substring(0, path.length - resource.length + 1))
     }
   }
+
 }

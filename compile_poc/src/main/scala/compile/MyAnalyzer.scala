@@ -30,14 +30,22 @@ trait MyAnalyzer extends Analyzer {
       val cyclic = typedDef.exists(t => cyclicReferences.contains(t))
       if (cyclic) {
         println("Yes probably cyclic!")
+        val newType = typeOf[Long]
+        val ident = Ident(newType.typeSymbol)
         UnTyper.traverse(typedDef)
-        val changedDef: DefDef = ddef.defineType(typeOf[Long])
-        treeBrowser.browse(changedDef)
 
-        var retyped = super.typedDefDef(changedDef)
-        treeBrowser.browse(retyped)
-        retyped
+        val msym = ddef.symbol.asMethod
+        msym.reset(MethodType(msym.paramss.flatten, newType))
 
+        val defCopy = treeCopy.DefDef(ddef, ddef.mods, ddef.name, ddef.tparams, ddef.vparamss, ident, ddef.rhs)
+        //        defCopy.defineType(typeOf[Long])
+        treeBrowser.browse(defCopy)
+        val res = super.typedDefDef(defCopy)
+        //        res.defineType(typeOf[Long])
+        treeBrowser.browse(res)
+        res
+        //        typedDef
+        //        defCopy
       } else
         typedDef
     }
@@ -49,15 +57,10 @@ trait MyAnalyzer extends Analyzer {
             super.typed(tree, mode, pt)
           } catch {
             case e: global.CyclicReference =>
-              println("Ident cyclic error!! " + tree.id);
               cyclicReferences = ident :: cyclicReferences
-              UnTyper.traverse(ident)
-              ident
-            //              throw e
+              throw e
 
             case e: Throwable =>
-              println("Other error");
-              println(e.getClass());
               throw e
           }
         case _ =>
