@@ -45,11 +45,8 @@ trait MyAnalyzer extends Analyzer {
         msym.reset(MethodType(msym.paramss.flatten, newType))
 
         val defCopy = treeCopy.DefDef(ddef, ddef.mods, ddef.name, ddef.tparams, ddef.vparamss, ident, ddef.rhs)
-
-        //        treeBrowser.browse(defCopy) //Show the tree
-
         val res = super.typedDefDef(defCopy)
-        treeBrowser.browse(res) //Show the tree
+        //        treeBrowser.browse(res) //Show the tree
         res
       }).getOrElse(typedDef)
     }

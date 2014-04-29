@@ -1,6 +1,6 @@
 package ast
 
-class Factorial {
+object Factorial {
     def fact(n:Int):Long={
 	n match {
            case 0 => 0
@@ -24,12 +24,12 @@ class Factorial {
         }
     }
 
-  trait TraitLevel0
-  case object Class1Level1 extends TraitLevel0
-  case object Class2Level1 extends TraitLevel0
-  trait TraitLevel1 extends TraitLevel0
-  case object Class1Level2 extends TraitLevel1
-  case object Class2Level2 extends TraitLevel1
+  class Level0
+  case object Class1Level1 extends Level0
+  case object Class2Level1 extends Level0
+  class Level1 extends Level0
+  case object Class1Level2 extends Level1
+  case object Class2Level2 extends Level1
 
   def level1(n:Int)={
   n match {
@@ -54,4 +54,6 @@ class Factorial {
            case n => level12(n-1)
         }
     }
+ 
+
 }

@@ -25,7 +25,6 @@ object Compile {
     val file = scala.reflect.io.AbstractFile.getFile("/home/csajka/svn_repos/scala_recur/scala_recur/compile_poc/factorial.scalatest")
     //    compileAllPhasesAtOnce(file)
     compilePhaseByPhase(file)
-
   }
 
   private def compileAllPhasesAtOnce(file: scala.reflect.io.AbstractFile): Unit = {
