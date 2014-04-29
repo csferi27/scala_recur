@@ -8,11 +8,50 @@ class Factorial {
            case n => fact(n-1)
         }
     }
-    def fact2(n:Int)={
+    def fact2(n:Int)={ 
 	n match {
            case 0 => 0
            case 1 => 2L
            case n => fact2(n-1)
+        }
+    }
+
+  def somethingHarder(n:Int)={
+  n match {
+           case 0 => 0.
+           case 1 => 2L
+           case n => somethingHarder(n-1)
+        }
+    }
+
+  trait TraitLevel0
+  case object Class1Level1 extends TraitLevel0
+  case object Class2Level1 extends TraitLevel0
+  trait TraitLevel1 extends TraitLevel0
+  case object Class1Level2 extends TraitLevel1
+  case object Class2Level2 extends TraitLevel1
+
+  def level1(n:Int)={
+  n match {
+           case 0 => Class1Level1
+           case 1 => Class2Level1
+           case n => level1(n-1)
+        }
+    }
+  
+  def level2(n:Int)={
+  n match {
+           case 0 => Class1Level2
+           case 1 => Class2Level2
+           case n => level2(n-1)
+        }
+    }
+
+    def level12(n:Int)={
+  n match {
+           case 0 => Class1Level2
+           case 1 => Class1Level1
+           case n => level12(n-1)
         }
     }
 }

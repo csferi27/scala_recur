@@ -7,30 +7,37 @@ trait MyAnalyzer extends Analyzer {
   selfAnalyser =>
   val global: Global
   var cyclicReferences: List[global.Ident] = Nil
+  var retypedTrees: Map[global.Tree, global.Type] = Map()
+
   class MyTyper(context: Context) extends selfAnalyser.Typer(context) {
     import global._
 
     override def typedCases(cases: List[CaseDef], pattp: Type, pt: Type): List[CaseDef] = {
       val typedCases = super.typedCases(cases, pattp, pt);
       if (typedCases.exists(_.isErroneous)) {
-        println("Has errorneous case def !!!");
+        typedCases.find(t => t.isErroneous && t.exists(cyclicReferences.contains(_))).foreach(
+          errorneous =>
+            {
+              val errTypes = typedCases.filter(_.isErroneous)
+              if (errTypes.size > 1) throw new IllegalStateException("Too many errorneous cases")
 
-        val okTypes = typedCases.filter(!_.isErroneous).map(t => t.tpe)
-        val errTypes = typedCases.filter(_.isErroneous)
-        val okLub = ptOrLub(okTypes, WildcardType)
-        if (errTypes.size > 1) throw new IllegalStateException("Too many errorneous cases")
-        val errorCase = errTypes(0)
-        println("LUB: " + okLub);
+              val okTypes = typedCases.filter(!_.isErroneous).map(t => t.tpe)
+              val okLub = ptOrLub(okTypes, WildcardType)
+              val errorCase = errTypes(0)
+              println("LUB: " + okLub);
+
+              retypedTrees += (errorneous -> okLub._1)
+            });
       }
       typedCases
     }
 
     override def typedDefDef(ddef: DefDef): DefDef = {
       val typedDef = super.typedDefDef(ddef)
-      val cyclic = typedDef.exists(t => cyclicReferences.contains(t))
-      if (cyclic) {
+      val cyclic = typedDef.find(t => retypedTrees.contains(t))
+      cyclic.map(retyped => {
         println("Yes probably cyclic!")
-        val newType = typeOf[Long]
+        val newType = retypedTrees(retyped)
         val ident = Ident(newType.typeSymbol)
         UnTyper.traverse(typedDef)
 
@@ -38,16 +45,13 @@ trait MyAnalyzer extends Analyzer {
         msym.reset(MethodType(msym.paramss.flatten, newType))
 
         val defCopy = treeCopy.DefDef(ddef, ddef.mods, ddef.name, ddef.tparams, ddef.vparamss, ident, ddef.rhs)
-        //        defCopy.defineType(typeOf[Long])
-        treeBrowser.browse(defCopy)
+
+        //        treeBrowser.browse(defCopy) //Show the tree
+
         val res = super.typedDefDef(defCopy)
-        //        res.defineType(typeOf[Long])
-        treeBrowser.browse(res)
+        treeBrowser.browse(res) //Show the tree
         res
-        //        typedDef
-        //        defCopy
-      } else
-        typedDef
+      }).getOrElse(typedDef)
     }
 
     override def typed(tree: Tree, mode: Int, pt: Type): Tree = {
@@ -57,6 +61,7 @@ trait MyAnalyzer extends Analyzer {
             super.typed(tree, mode, pt)
           } catch {
             case e: global.CyclicReference =>
+              println("cyclic ident");
               cyclicReferences = ident :: cyclicReferences
               throw e
 
