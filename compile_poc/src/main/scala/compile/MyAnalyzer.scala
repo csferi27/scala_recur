@@ -26,6 +26,8 @@ trait MyAnalyzer extends Analyzer {
               val errorCase = errTypes(0)
               println("LUB: " + okLub);
 
+              context.condBufferFlush(e => true)
+              global.reporter.reset
               retypedTrees += (errorneous -> okLub._1)
             });
       }
@@ -35,6 +37,7 @@ trait MyAnalyzer extends Analyzer {
     override def typedDefDef(ddef: DefDef): DefDef = {
       val typedDef = super.typedDefDef(ddef)
       val cyclic = typedDef.find(t => retypedTrees.contains(t))
+
       cyclic.map(retyped => {
         println("Yes probably cyclic!")
         val newType = retypedTrees(retyped)
@@ -46,7 +49,8 @@ trait MyAnalyzer extends Analyzer {
 
         val defCopy = treeCopy.DefDef(ddef, ddef.mods, ddef.name, ddef.tparams, ddef.vparamss, ident, ddef.rhs)
         val res = super.typedDefDef(defCopy)
-        //        treeBrowser.browse(res) //Show the tree
+
+        //treeBrowser.browse(res) //Show the tree
         res
       }).getOrElse(typedDef)
     }
@@ -61,6 +65,7 @@ trait MyAnalyzer extends Analyzer {
               println("cyclic ident");
               cyclicReferences = ident :: cyclicReferences
               UnTyper.traverse(ident)
+              //              context.errBuffer.clear
               ident
             //              throw e
 
