@@ -8,6 +8,14 @@ object Factorial {
   case object Class1Level2 extends Level1
   case object Class2Level2 extends Level1
 
+  def seqTest(n: Int) = {
+    if (n==1) 5L
+    else {
+      5+5
+      9.
+    }      
+  }
+
   def fact2(n: Int) = {
     n match {
       case 0 => 0
