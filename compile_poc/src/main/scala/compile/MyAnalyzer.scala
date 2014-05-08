@@ -36,22 +36,19 @@ trait MyAnalyzer extends Analyzer {
         def isNotNoTypeOrNothing(typ: Type): Boolean = {
           typ != NoType && typ != typeOf[Nothing]
         }
-        tree.children match {
-          case head :: tail => {
-            val returnBranches = collectReturnBranches(tree)
-            val nonErrorneousReturnBranches = returnBranches.filter(!_.exists(_.isErroneous))
-            val errorneousReturnBranches = returnBranches.filter(_.exists(_.isErroneous))
-            val types = nonErrorneousReturnBranches.map(t => t.tpe)
-            val typesWithPt = (pt :: types).filter(isNotNoTypeOrNothing)
+        if (!tree.children.isEmpty) {
+          val returnBranches = collectReturnBranches(tree)
+          val nonErrorneousReturnBranches = returnBranches.filter(!_.exists(_.isErroneous))
+          val errorneousReturnBranches = returnBranches.filter(_.exists(_.isErroneous))
+          val types = nonErrorneousReturnBranches.map(t => t.tpe)
+          val typesWithPt = (pt :: types).filter(isNotNoTypeOrNothing)
 
-            val lub = ptOrLub(typesWithPt, NoType)._1
-            val errorTypes = errorneousReturnBranches.map(deduceType(_, lub))
-            val typesWithLub = (lub :: errorTypes).filter(isNotNoTypeOrNothing)
+          val lub = ptOrLub(typesWithPt, NoType)._1
+          val errorTypes = errorneousReturnBranches.map(deduceType(_, lub))
+          val typesWithLub = (lub :: errorTypes).filter(isNotNoTypeOrNothing)
 
-            ptOrLub(typesWithLub, NoType)._1
-          }
-          case Nil => pt
-        }
+          ptOrLub(typesWithLub, NoType)._1
+        } else pt
       }
 
       val typedDef = super.typedDefDef(ddef)
