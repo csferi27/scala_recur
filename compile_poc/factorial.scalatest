@@ -101,21 +101,5 @@ object Factorial {
       case n => level12(n - 1, "AAA")
     }
   }
-
-  /*  def pairtest(n:Int)={
-  n match {
-           case 0 => pairtest(n+1)
-           case 1 => (1L,1)
-           case 2 => (2.,2)
-        }
-    }
-  
-  def main(args: Array[String]) {
-    println(level12(0,""))
-    println(level1(1))
-    println(level1(3))
-    println(level2(6))
-   // println(pairtest(2))
-  }
-*/
+   
 }
