@@ -16,6 +16,7 @@ object Compile {
   val settings = new Settings
   settings.bootclasspath.value = libPath.mkString(File.pathSeparator)
   settings.classpath.value = libPath.mkString(File.pathSeparator)
+
   val reporter = new ConsoleReporter(settings)
   val global = new Global(settings, reporter) with RecursiveFunctions
 
@@ -29,7 +30,6 @@ object Compile {
 
   private def compileAllPhasesAtOnce(file: scala.reflect.io.AbstractFile): Unit = {
     val compileRun = new global.Run
-    //    global.afterEachPhase(global.)
     compileRun.compileFiles(List(file)) //runs compilation immediately
   }
 
@@ -41,11 +41,13 @@ object Compile {
     global.phase.run
     compileRun.advancePhase
     do {
+
       global.phase = global.phase.next;
       println("-------------------------------------")
       println(global.phase);
       println("-------------------------------------")
       global.phase.run
+
       compileRun.advancePhase
     } while (global.phase.hasNext)
   }

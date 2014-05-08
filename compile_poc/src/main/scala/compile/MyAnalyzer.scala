@@ -2,6 +2,8 @@ package compile
 
 import scala.tools.nsc.typechecker.Analyzer
 import scala.tools.nsc.Global
+import scala.annotation.tailrec
+import scala.reflect.api.Types
 
 trait MyAnalyzer extends Analyzer {
   selfAnalyser =>
@@ -12,35 +14,51 @@ trait MyAnalyzer extends Analyzer {
   class MyTyper(context: Context) extends selfAnalyser.Typer(context) {
     import global._
 
-    override def typedCases(cases: List[CaseDef], pattp: Type, pt: Type): List[CaseDef] = {
-      val typedCases = super.typedCases(cases, pattp, pt);
-      if (typedCases.exists(_.isErroneous)) {
-        typedCases.find(t => t.isErroneous && t.exists(cyclicReferences.contains(_))).foreach(
-          errorneous =>
-            {
-              val errTypes = typedCases.filter(_.isErroneous)
-              if (errTypes.size > 1) throw new IllegalStateException("Too many errorneous cases")
-
-              val okTypes = typedCases.filter(!_.isErroneous).map(t => t.tpe)
-              val okLub = ptOrLub(okTypes, WildcardType)
-              val errorCase = errTypes(0)
-              println("LUB: " + okLub);
-
-              context.condBufferFlush(e => true)
-              global.reporter.reset
-              retypedTrees += (errorneous -> okLub._1)
-            });
-      }
-      typedCases
-    }
-
     override def typedDefDef(ddef: DefDef): DefDef = {
-      val typedDef = super.typedDefDef(ddef)
-      val cyclic = typedDef.find(t => retypedTrees.contains(t))
+      def collectReturnBranches(tree: Tree): List[Tree] = {
+        //TODO: should be used when tree is Block
+        def hasReturn(tree: Tree): Boolean = {
+          tree.exists(t => t.isInstanceOf[Return])
+        }
 
-      cyclic.map(retyped => {
-        println("Yes probably cyclic!")
-        val newType = retypedTrees(retyped)
+        val res = tree match {
+          case iff @ If(cond: Tree, thenp: Tree, elsep: Tree) => thenp :: elsep :: Nil
+          case mmatch @ Match(selector: Tree, cases: List[CaseDef]) => cases
+          case block @ Block(stats: List[Tree], expr: Tree) => stats.last :: Nil
+          case defdef @ DefDef(mods: Modifiers, name: Name, tparams: List[TypeDef], vparamss: List[List[ValDef]], tpt: Tree, rhs: Tree) => rhs :: Nil
+          case _ => Nil
+        }
+
+        res.filter(t => t != NoType).filter(t => t != typeOf[Nothing])
+      }
+
+      def deduceType(tree: Tree, pt: Type): Type = {
+        def isNotNoTypeOrNothing(typ: Type): Boolean = {
+          typ != NoType && typ != typeOf[Nothing]
+        }
+        tree.children match {
+          case head :: tail => {
+            val returnBranches = collectReturnBranches(tree)
+            val nonErrorneousReturnBranches = returnBranches.filter(!_.exists(_.isErroneous))
+            val errorneousReturnBranches = returnBranches.filter(_.exists(_.isErroneous))
+            val types = nonErrorneousReturnBranches.map(t => t.tpe)
+            val typesWithPt = (pt :: types).filter(isNotNoTypeOrNothing)
+
+            val lub = ptOrLub(typesWithPt, NoType)._1
+            val errorTypes = errorneousReturnBranches.map(deduceType(_, lub))
+            val typesWithLub = (lub :: errorTypes).filter(isNotNoTypeOrNothing)
+
+            ptOrLub(typesWithLub, NoType)._1
+          }
+          case Nil => pt
+        }
+      }
+
+      val typedDef = super.typedDefDef(ddef)
+      if (typedDef.exists(t => cyclicReferences.contains(t))) {
+        //        treeBrowser.browse(typedDef) //Show the tree
+        val newType = deduceType(typedDef, NoType)
+        println("NEW TYPE: " + newType);
         val ident = Ident(newType.typeSymbol)
         UnTyper.traverse(typedDef)
 
@@ -48,26 +66,24 @@ trait MyAnalyzer extends Analyzer {
         msym.reset(MethodType(msym.paramss.flatten, newType))
 
         val defCopy = treeCopy.DefDef(ddef, ddef.mods, ddef.name, ddef.tparams, ddef.vparamss, ident, ddef.rhs)
-        val res = super.typedDefDef(defCopy)
 
-        //treeBrowser.browse(res) //Show the tree
-        res
-      }).getOrElse(typedDef)
+        super.typedDefDef(defCopy)
+      } else
+        typedDef
     }
 
     override def typed(tree: Tree, mode: Int, pt: Type): Tree = {
       tree match {
-        case ident @ global.Ident(s) =>
+        case ident @ Ident(s) =>
           try {
             super.typed(tree, mode, pt)
           } catch {
-            case e: global.CyclicReference =>
+            case e: CyclicReference =>
               println("cyclic ident");
               cyclicReferences = ident :: cyclicReferences
               UnTyper.traverse(ident)
               //              context.errBuffer.clear
               ident
-            //              throw e
 
             case e: Throwable =>
               throw e
@@ -76,10 +92,10 @@ trait MyAnalyzer extends Analyzer {
           super.typed(tree, mode, pt)
       }
     }
-
   }
 
   override def newTyper(context: Context): Typer = {
     new MyTyper(context)
   }
+
 }

@@ -1,29 +1,6 @@
 package ast
 
 object Factorial {
-    def fact(n:Int):Long={
-	n match {
-           case 0 => 0
-           case 1 => 2L
-           case n => fact(n-1)
-        }
-    }
-    def fact2(n:Int)={ 
-	n match {
-           case 0 => 0
-           case 1 => 2L
-           case n => fact2(n-1)
-        }
-    }
-
-  def somethingHarder(n:Int)={
-  n match {
-           case 0 => 0.
-           case 1 => 2L
-           case n => somethingHarder(n-1)
-        }
-    }
-
   class Level0
   case object Class1Level1 extends Level0
   case object Class2Level1 extends Level0
@@ -31,29 +8,106 @@ object Factorial {
   case object Class1Level2 extends Level1
   case object Class2Level2 extends Level1
 
-  def level1(n:Int)={
+  def fact2(n: Int) = {
+    n match {
+      case 0 => 0
+      case 1 => 2L
+      case n => fact2(n - 1)
+    }
+  }
+
+  def level12If(n: Int, g: String) = {
+    if (n == 0) Class1Level1
+    else if (n == 1 || n == 2) {
+      if (n == 1) level12If(n - 1, "AAA")
+      else Class1Level2
+    } else if (n == 3) Class1Level1
+    else Class1Level1
+  }
+
+  def level12IfMatch(n: Int) = {
+    if (n == 0) Class1Level1
+    else if (n == 1 || n == 2) {
+      n match {
+        case 1 => level12IfMatch(n - 1)
+        case 2 => Class1Level2
+      }
+    } else if (n == 3) Class1Level1
+    else Class1Level1
+  }
+   
+  def level2IfMatch(n: Int) = {
+    if (n == 0) Class1Level2
+    else if (n == 1 || n == 2) {
+      n match {
+        case 1 => level2IfMatch(n - 1)
+        case 2 => Class2Level2
+      }
+    } else if (n == 3) Class1Level2
+    else Class1Level2
+  }
+
+  def factIf(n: Int) = {
+    if (n == 0) 0L
+    else if (n == 1) 2.
+    else if (n == 3) 6
+    else factIf(n - 1)
+  }
+
+  def fact(n: Int): Long = {
+    n match {
+      case 0 => 0
+      case 1 => 2L
+      case n => fact(n - 1)
+    }
+  }
+
+  def somethingHarder(n: Int) = {
+    n match {
+      case 0 => 0.
+      case 1 => 2L
+      case n => somethingHarder(n - 1)
+    }
+  }
+
+  def level1(n: Int) = {
+    n match {
+      case 0 => Class1Level1
+      case 1 => Class2Level1
+      case n => level1(n - 1)
+    }
+  }
+
+  def level2(n: Int) = {
+    n match {
+      case 0 => Class1Level2
+      case 1 => Class2Level2
+      case n => level2(n - 1)
+    }
+  }
+
+  def level12(n: Int, g: String) = {
+    n match {
+      case 0 => Class1Level2
+      case 1 => Class1Level1
+      case n => level12(n - 1, "AAA")
+    }
+  }
+
+  /*  def pairtest(n:Int)={
   n match {
-           case 0 => Class1Level1
-           case 1 => Class2Level1
-           case n => level1(n-1)
+           case 0 => pairtest(n+1)
+           case 1 => (1L,1)
+           case 2 => (2.,2)
         }
     }
   
-  def level2(n:Int)={
-  n match {
-           case 0 => Class1Level2
-           case 1 => Class2Level2
-           case n => level2(n-1)
-        }
-    }
-
-    def level12(n:Int)={
-  n match {
-           case 0 => Class1Level2
-           case 1 => Class1Level1
-           case n => level12(n-1)
-        }
-    }
- 
-
+  def main(args: Array[String]) {
+    println(level12(0,""))
+    println(level1(1))
+    println(level1(3))
+    println(level2(6))
+   // println(pairtest(2))
+  }
+*/
 }
