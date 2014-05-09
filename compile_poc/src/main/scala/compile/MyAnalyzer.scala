@@ -45,12 +45,12 @@ trait MyAnalyzer extends Analyzer {
           val errorneousReturnBranches = returnBranches.filter(_.exists(_.isErroneous))
           val types = nonErrorneousReturnBranches.map(t => t.tpe)
           val typesWithPt = (pt :: types).filter(isNotNoTypeOrNothing)
-          println("typesWithPt: " + typesWithPt);
+          //          println("typesWithPt: " + typesWithPt);
 
           val lub = ptOrLub(typesWithPt, NoType)._1
           val errorTypes = errorneousReturnBranches.map(deduceType(_, lub))
           val typesWithLub = (lub :: errorTypes).filter(isNotNoTypeOrNothing)
-          println("typesWithLub: " + typesWithLub);
+          //          println("typesWithLub: " + typesWithLub);
           ptOrLub(typesWithLub, NoType)._1
         } else pt
       }
