@@ -1,6 +1,13 @@
 package ast
 
 object Factorial {
+  /*def returnRec(accumulator: Int, number: Int) = {
+       if (number == 1) 
+            return accumulator
+       else
+           returnRec(accumulator * number, number - 1)
+    }*/
+
   class Level0
   case object Class1Level1 extends Level0
   case object Class2Level1 extends Level0
@@ -8,37 +15,52 @@ object Factorial {
   case object Class1Level2 extends Level1
   case object Class2Level2 extends Level1
 
-def seqTest2(n: Int) = {
-    if (n==1) 5L
-    else if (n==2){
-      6;      
-      5+5
-      seqTest2(9)      
+  def deepRec(n: Int) = {
+    if (n == 0) Class1Level2
+    else if (n == 1 || n == 2 || n == 3) {
+      n match {
+        case 3 => Class2Level2
+        case _ =>
+          if (n != 1) deepRec(n - 1)
+          else Class2Level1
+      }
+    } else if (n == 4) Class1Level2
+    else Class1Level2
+  }
+
+  def seqTest2(n: Int) = {
+    if (n == 1) 5L
+    else if (n == 2) {
+      6;
+      5 + 5
+      seqTest2(9)
     } else
-    9.     
+      9.
   }
 
   def seqTest(n: Int) = {
-    if (n==1) 5L
-    else if (n==2){
+    if (n == 1) 5L
+    else if (n == 2) {
       6;
-      {{
-      5+5
-      seqTest(9)
-      }}
+      {
+        {
+          5 + 5
+          seqTest(9)
+        }
+      }
     } else
-    9.     
+      9.
   }
 
-   def factorial(number: Int)  = {
+  def factorial(number: Int) = {
     def factorialWithAccumulator(accumulator: Int, number: Int) = {
-       if (number == 1) 
-             accumulator
-       else
-           factorialWithAccumulator(accumulator * number, number - 1)
+      if (number == 1)
+        accumulator
+      else
+        factorialWithAccumulator(accumulator * number, number - 1)
     }
-   factorialWithAccumulator(1, number)
-  } 
+    factorialWithAccumulator(1, number)
+  }
 
   def fact2(n: Int) = {
     n match {
@@ -48,39 +70,30 @@ def seqTest2(n: Int) = {
     }
   }
 
-def pascal(column: Long, row: Long) = {
-  type Point = (Long, Long)
-  type Points = List[Point]
-  type Triangle = Map[Point,Long]
-  def above(p: Point) = (p._1, p._2 - 1)
-  def aboveLeft(p: Point) = (p._1 - 1, p._2 - 1)
-  
-  def find(ps: Points, t: Triangle) = ps match {
-    // Found the ultimate goal
-    case (p :: Nil) if t contains p => t(p)
-    // Found an intermediate point: pop the stack and carry on
-    case (p :: rest) if t contains p => find(rest, t)
-    // Hit a triangle edge, add it to the triangle
-    case ((c, r) :: _) if (c == 0) || (c == r) => find(ps, t + ((c,r) -> 1))
-    // Triangle contains (c - 1, r - 1)...
-    case (p :: _) if t contains aboveLeft(p) => if (t contains above(p))
-        // And it contains (c, r - 1)!  Add to the triangle
+  def pascal(column: Long, row: Long) = {
+    type Point = (Long, Long)
+    type Points = List[Point]
+    type Triangle = Map[Point, Long]
+    def above(p: Point) = (p._1, p._2 - 1)
+    def aboveLeft(p: Point) = (p._1 - 1, p._2 - 1)
+
+    def find(ps: Points, t: Triangle) = ps match {
+      case (p :: Nil) if t contains p            => t(p)
+      case (p :: rest) if t contains p           => find(rest, t)
+      case ((c, r) :: _) if (c == 0) || (c == r) => find(ps, t + ((c, r) -> 1))
+      case (p :: _) if t contains aboveLeft(p) => if (t contains above(p))
         find(ps, t + (p -> (t(aboveLeft(p)) + t(above(p)))))
       else
-        // Does not contain(c, r -1).  So find that
         find(above(p) :: ps, t)
-    // If we get here, we don't have (c - 1, r - 1).  Find that.
-    case (p :: _) => find(aboveLeft(p) :: ps, t)
+      case (p :: _) => find(aboveLeft(p) :: ps, t)
+    }
+
+    require(column >= 0 && row >= 0 && column <= row)
+    (column, row) match {
+      case (c, r) if (c == 0) || (c == r) => 1
+      case p                              => find(List(p), Map())
+    }
   }
-
-  require(column >= 0 && row >= 0 && column <= row)
-  (column, row) match {
-    case (c, r) if (c == 0) || (c == r) => 1
-    case p => find(List(p), Map())
-  }
-}
-
-
 
   def multipleCalls2(n: Int, g: String) = {
     if (n == 0) Class1Level2
@@ -119,7 +132,7 @@ def pascal(column: Long, row: Long) = {
     } else if (n == 3) Class1Level1
     else Class1Level1
   }
-   
+
   def level2IfMatch(n: Int) = {
     if (n == 0) Class1Level2
     else if (n == 1 || n == 2) {
@@ -177,5 +190,4 @@ def pascal(column: Long, row: Long) = {
       case n => level12(n - 1, "AAA")
     }
   }
-   
 }

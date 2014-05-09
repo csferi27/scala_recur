@@ -26,7 +26,9 @@ trait MyAnalyzer extends Analyzer {
           case mmatch @ Match(selector: Tree, cases: List[CaseDef]) => cases
           case block @ Block(stats: List[Tree], expr: Tree) => stats.last :: Nil
           case defdef @ DefDef(mods: Modifiers, name: Name, tparams: List[TypeDef], vparamss: List[List[ValDef]], tpt: Tree, rhs: Tree) => rhs :: Nil
-          //          case ret @ Return(expr) => expr :: Nil
+          case label @ LabelDef(sym, params, rhs) => rhs :: Nil
+          case cased @ CaseDef(pat: Tree, guard: Tree, body: Tree) => body :: Nil
+
           case _ => Nil
         }
 
@@ -43,11 +45,12 @@ trait MyAnalyzer extends Analyzer {
           val errorneousReturnBranches = returnBranches.filter(_.exists(_.isErroneous))
           val types = nonErrorneousReturnBranches.map(t => t.tpe)
           val typesWithPt = (pt :: types).filter(isNotNoTypeOrNothing)
+          println("typesWithPt: " + typesWithPt);
 
           val lub = ptOrLub(typesWithPt, NoType)._1
           val errorTypes = errorneousReturnBranches.map(deduceType(_, lub))
           val typesWithLub = (lub :: errorTypes).filter(isNotNoTypeOrNothing)
-
+          println("typesWithLub: " + typesWithLub);
           ptOrLub(typesWithLub, NoType)._1
         } else pt
       }
@@ -65,7 +68,9 @@ trait MyAnalyzer extends Analyzer {
 
         val defCopy = treeCopy.DefDef(ddef, ddef.mods, ddef.name, ddef.tparams, ddef.vparamss, ident, ddef.rhs)
 
-        super.typedDefDef(defCopy)
+        val res = super.typedDefDef(defCopy)
+        //        treeBrowser.browse(res) //Show the tree
+        res
       } else
         typedDef
     }
