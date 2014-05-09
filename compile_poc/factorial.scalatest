@@ -8,12 +8,12 @@ object Factorial {
            returnRec(accumulator * number, number - 1)
     }*/
 
-  class Level0
-  case object Class1Level1 extends Level0
-  case object Class2Level1 extends Level0
-  class Level1 extends Level0
-  case object Class1Level2 extends Level1
-  case object Class2Level2 extends Level1
+  class Level1
+  case object Class1Level1 extends Level1
+  case object Class2Level1 extends Level1
+  class Level2 extends Level1
+  case object Class1Level2 extends Level2
+  case object Class2Level2 extends Level2
 
   def deepRec(n: Int) = {
     if (n == 0) Class1Level2
