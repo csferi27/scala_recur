@@ -26,6 +26,7 @@ trait MyAnalyzer extends Analyzer {
           case mmatch @ Match(selector: Tree, cases: List[CaseDef]) => cases
           case block @ Block(stats: List[Tree], expr: Tree) => stats.last :: Nil
           case defdef @ DefDef(mods: Modifiers, name: Name, tparams: List[TypeDef], vparamss: List[List[ValDef]], tpt: Tree, rhs: Tree) => rhs :: Nil
+          //          case ret @ Return(expr) => expr :: Nil
           case _ => Nil
         }
 
@@ -52,7 +53,7 @@ trait MyAnalyzer extends Analyzer {
       }
 
       val typedDef = super.typedDefDef(ddef)
-      if (typedDef.exists(t => cyclicReferences.contains(t))) {
+      if (typedDef.exists(t => cyclicReferences.contains(t)) && typedDef.exists(_.isErroneous)) {
         //        treeBrowser.browse(typedDef) //Show the tree
         val newType = deduceType(typedDef, NoType)
         println("NEW TYPE: " + newType);
