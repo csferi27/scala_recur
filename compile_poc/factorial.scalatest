@@ -1,25 +1,49 @@
 package ast
 
 object Factorial {
-	 
+ //def returnRec(accumulator: Int, number: Int) = {
+ //     if (number == 1) 
+ //           return accumulator
+ //      else
+ //          returnRec(accumulator * number, number - 1)
+ // }
+ 
+ /* //Should be long
+  def factAddReverse(n: Int) = {
+    n match {
+      case 0 => 0
+      case 1 => 2L
+      case n => 2 + factAddReverse(n - 1) 
+    }
+  }  */
   
-
-	class A { 
-	  def toC: C = new C 
-	  def toD: D = new D
-	}
-	
-	class B extends A 
-	class C extends A 
-	class D extends A
-	
-	//Should be A
-	def multi(n: Int) = n match {
-	  case 0 => new B
-	  case x : Int if (x > 0) => multi(n - 1).toC
-	  case x : Int if (x < 0) => multi(n + 1).toD
-	}
-//Should be Long
+  //Should be double
+  def factAdd(n: Int) = {
+    n match {
+      case 0 => 0
+      case 1 => 2L
+      case n => factAdd(n - 1) + 9.
+    }
+  }
+ 
+  class A { 
+    def toC: C = new C 
+    def toD: D = new D
+  }
+  
+  class B extends A 
+  class C extends A 
+  class D extends A
+  
+  //Should be A
+  def multi(n: Int) = n match {
+    case 0 => new B
+    case x : Int if (x > 0) => multi(n - 1).toC
+    case x : Int if (x < 0) => multi(n + 1).toD
+  }
+  
+  
+  //Should be Long
   def fact2(n: Int) = {
     n match {
       case 0 => 0
@@ -27,13 +51,7 @@ object Factorial {
       case n => fact2(n - 1)
     }
   }
-// def returnRec(accumulator: Int, number: Int) = {
-//      if (number == 1) 
-//            return accumulator
-//       else
-//           returnRec(accumulator * number, number - 1)
-//  }
-
+ 
   class Level1
   case object Class1Level1 extends Level1
   case object Class2Level1 extends Level1
@@ -224,4 +242,5 @@ object Factorial {
       case n => level12(n - 1, "AAA")
     }
   }
+  
 }

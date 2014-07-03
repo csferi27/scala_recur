@@ -66,6 +66,7 @@ trait MyAnalyzer extends Analyzer {
 
           val retypedErrMethodCalls = errorneousReturnBranches.filter(t => t.isInstanceOf[Apply] || t.isInstanceOf[Select]).map(
             b => {
+              //              println("Retyping" + b);
               UnTyper.traverse(b); typed(b)
             })
 
