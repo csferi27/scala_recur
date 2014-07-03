@@ -9,12 +9,27 @@ trait MyAnalyzer extends Analyzer {
   selfAnalyser =>
   val global: Global
   var cyclicReferences: List[global.Ident] = Nil
-  var retypedTrees: Map[global.Tree, global.Type] = Map()
 
   class MyTyper(context: Context) extends selfAnalyser.Typer(context) {
     import global._
 
-    override def typedDefDef(ddef: DefDef): DefDef = {
+    override def typedDefDef(defDef: DefDef): DefDef = {
+
+      def updateDefDefType(dd: DefDef, dtype: Type) = {
+        val msym = dd.symbol.asMethod
+        msym.reset(MethodType(msym.paramss.flatten, dtype))
+        dd.setSymbol(msym)
+      }
+
+      def deleteDefDefType(dd: DefDef): Unit = {
+        dd.tpe = null;
+        dd.tpt.tpe = null;
+      }
+
+      def isNotNoTypeOrNothing(typ: Type): Boolean = {
+        typ != NoType && typ != typeOf[Nothing] && typ != null
+      }
+
       def collectReturnBranches(tree: Tree): List[Tree] = {
         //TODO: should be used when tree is Block
         def hasReturn(tree: Tree): Boolean = {
@@ -23,51 +38,59 @@ trait MyAnalyzer extends Analyzer {
 
         val res = tree match {
           case iff @ If(cond: Tree, thenp: Tree, elsep: Tree) => thenp :: elsep :: Nil
-          case mmatch @ Match(selector: Tree, cases: List[CaseDef]) => cases
+          case mmatch @ Match(selector: Tree, cases: List[CaseDef]) => cases.flatMap(collectReturnBranches)
           case block @ Block(stats: List[Tree], expr: Tree) => stats.last :: Nil
           case defdef @ DefDef(mods: Modifiers, name: Name, tparams: List[TypeDef], vparamss: List[List[ValDef]], tpt: Tree, rhs: Tree) => rhs :: Nil
           case label @ LabelDef(sym, params, rhs) => rhs :: Nil
           case cased @ CaseDef(pat: Tree, guard: Tree, body: Tree) => body :: Nil
-
+          case ret @ Return(expr: Tree) => expr :: Nil
           case _ => Nil
         }
 
-        res.filter(t => t != NoType).filter(t => t != typeOf[Nothing])
+        res.filter(t => isNotNoTypeOrNothing(t.tpe))
       }
 
       def deduceType(tree: Tree, pt: Type): Type = {
-        def isNotNoTypeOrNothing(typ: Type): Boolean = {
-          typ != NoType && typ != typeOf[Nothing]
-        }
         if (!tree.children.isEmpty) {
           val returnBranches = collectReturnBranches(tree)
           val nonErrorneousReturnBranches = returnBranches.filter(!_.exists(_.isErroneous))
           val errorneousReturnBranches = returnBranches.filter(_.exists(_.isErroneous))
           val types = nonErrorneousReturnBranches.map(t => t.tpe)
-          val typesWithPt = (pt :: types).filter(isNotNoTypeOrNothing)
-          //          println("typesWithPt: " + typesWithPt);
+          val typesWithPt = (defDef.tpt.tpe :: pt :: types).filter(isNotNoTypeOrNothing)
 
+          //lub of method's current type and correctly branches 
           val lub = ptOrLub(typesWithPt, NoType)._1
-          val errorTypes = errorneousReturnBranches.map(deduceType(_, lub))
-          val typesWithLub = (lub :: errorTypes).filter(isNotNoTypeOrNothing)
-          //          println("typesWithLub: " + typesWithLub);
-          ptOrLub(typesWithLub, NoType)._1
+
+          //treeBrowser.browse(ddef) //Show the tree
+          updateDefDefType(defDef, lub)
+
+          val retypedErrMethodCalls = errorneousReturnBranches.filter(t => t.isInstanceOf[Apply] || t.isInstanceOf[Select]).map(
+            b => {
+              UnTyper.traverse(b); typed(b)
+            })
+
+          val retypedOkMethodCalls = retypedErrMethodCalls.filter(!_.exists(_.isErroneous))
+
+          // lub updated with types of retyped errorneous method calls
+          val retypedLub = ptOrLub(lub :: retypedOkMethodCalls.map(_.tpe), NoType)._1
+          val errorneousReturnBranchesTypes = errorneousReturnBranches.map(deduceType(_, retypedLub))
+
+          ptOrLub((retypedLub :: errorneousReturnBranchesTypes).filter(isNotNoTypeOrNothing), NoType)._1
         } else pt
       }
 
-      val typedDef = super.typedDefDef(ddef)
+      val typedDef = super.typedDefDef(defDef)
       if (typedDef.exists(t => cyclicReferences.contains(t)) && typedDef.exists(_.isErroneous)) {
-        //        treeBrowser.browse(typedDef) //Show the tree
+
+        deleteDefDefType(typedDef)
         val newType = deduceType(typedDef, NoType)
-        println("NEW TYPE: " + newType);
         val ident = Ident(newType.typeSymbol)
         UnTyper.traverse(typedDef)
 
-        val msym = ddef.symbol.asMethod
+        val msym = defDef.symbol.asMethod
         msym.reset(MethodType(msym.paramss.flatten, newType))
 
-        val defCopy = treeCopy.DefDef(ddef, ddef.mods, ddef.name, ddef.tparams, ddef.vparamss, ident, ddef.rhs)
-
+        val defCopy = treeCopy.DefDef(defDef, defDef.mods, defDef.name, defDef.tparams, defDef.vparamss, ident, defDef.rhs)
         val res = super.typedDefDef(defCopy)
         //        treeBrowser.browse(res) //Show the tree
         res
@@ -82,14 +105,9 @@ trait MyAnalyzer extends Analyzer {
             super.typed(tree, mode, pt)
           } catch {
             case e: CyclicReference =>
-              println("cyclic ident");
               cyclicReferences = ident :: cyclicReferences
               UnTyper.traverse(ident)
-              //              context.errBuffer.clear
               ident
-
-            case e: Throwable =>
-              throw e
           }
         case _ =>
           super.typed(tree, mode, pt)

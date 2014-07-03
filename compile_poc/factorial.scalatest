@@ -1,12 +1,38 @@
 package ast
 
 object Factorial {
-  /*def returnRec(accumulator: Int, number: Int) = {
-       if (number == 1) 
-            return accumulator
-       else
-           returnRec(accumulator * number, number - 1)
-    }*/
+	 
+  
+
+	class A { 
+	  def toC: C = new C 
+	  def toD: D = new D
+	}
+	
+	class B extends A 
+	class C extends A 
+	class D extends A
+	
+	//Should be A
+	def multi(n: Int) = n match {
+	  case 0 => new B
+	  case x : Int if (x > 0) => multi(n - 1).toC
+	  case x : Int if (x < 0) => multi(n + 1).toD
+	}
+//Should be Long
+  def fact2(n: Int) = {
+    n match {
+      case 0 => 0
+      case 1 => 2L
+      case n => fact2(n - 1)
+    }
+  }
+// def returnRec(accumulator: Int, number: Int) = {
+//      if (number == 1) 
+//            return accumulator
+//       else
+//           returnRec(accumulator * number, number - 1)
+//  }
 
   class Level1
   case object Class1Level1 extends Level1
@@ -15,6 +41,7 @@ object Factorial {
   case object Class1Level2 extends Level2
   case object Class2Level2 extends Level2
 
+  //Should be Level1
   def deepRec(n: Int) = {
     if (n == 0) Class1Level2
     else if (n == 1 || n == 2 || n == 3) {
@@ -28,6 +55,7 @@ object Factorial {
     else Class1Level2
   }
 
+  //Should be double
   def seqTest2(n: Int) = {
     if (n == 1) 5L
     else if (n == 2) {
@@ -37,7 +65,8 @@ object Factorial {
     } else
       9.
   }
-
+  
+  //Should be double
   def seqTest(n: Int) = {
     if (n == 1) 5L
     else if (n == 2) {
@@ -52,6 +81,7 @@ object Factorial {
       9.
   }
 
+  //Should be Int
   def factorial(number: Int) = {
     def factorialWithAccumulator(accumulator: Int, number: Int) = {
       if (number == 1)
@@ -62,14 +92,7 @@ object Factorial {
     factorialWithAccumulator(1, number)
   }
 
-  def fact2(n: Int) = {
-    n match {
-      case 0 => 0
-      case 1 => 2L
-      case n => fact2(n - 1)
-    }
-  }
-
+  //Should be Long
   def pascal(column: Long, row: Long) = {
     type Point = (Long, Long)
     type Points = List[Point]
@@ -95,6 +118,7 @@ object Factorial {
     }
   }
 
+  //Should be Level2
   def multipleCalls2(n: Int, g: String) = {
     if (n == 0) Class1Level2
     else if (n == 1 || n == 2) {
@@ -104,6 +128,7 @@ object Factorial {
     else Class2Level2
   }
 
+  //Should be Level1
   def multipleCalls12(n: Int, g: String) = {
     if (n == 0) Class1Level1
     else if (n == 1 || n == 2) {
@@ -113,6 +138,7 @@ object Factorial {
     else Class2Level1
   }
 
+  //Should be Level1
   def level12If(n: Int, g: String) = {
     if (n == 0) Class1Level1
     else if (n == 1 || n == 2) {
@@ -122,6 +148,7 @@ object Factorial {
     else Class1Level1
   }
 
+  //Should be Level1
   def level12IfMatch(n: Int) = {
     if (n == 0) Class1Level1
     else if (n == 1 || n == 2) {
@@ -133,6 +160,7 @@ object Factorial {
     else Class1Level1
   }
 
+  //Should be Level2
   def level2IfMatch(n: Int) = {
     if (n == 0) Class1Level2
     else if (n == 1 || n == 2) {
@@ -144,6 +172,7 @@ object Factorial {
     else Class1Level2
   }
 
+  //Should be Double
   def factIf(n: Int) = {
     if (n == 0) 0L
     else if (n == 1) 2.
@@ -151,6 +180,7 @@ object Factorial {
     else factIf(n - 1)
   }
 
+  //Should be long
   def fact(n: Int): Long = {
     n match {
       case 0 => 0
@@ -158,7 +188,8 @@ object Factorial {
       case n => fact(n - 1)
     }
   }
-
+  
+  //Should be Double
   def somethingHarder(n: Int) = {
     n match {
       case 0 => 0.
@@ -166,7 +197,8 @@ object Factorial {
       case n => somethingHarder(n - 1)
     }
   }
-
+  
+  //Should be Level1
   def level1(n: Int) = {
     n match {
       case 0 => Class1Level1
@@ -175,6 +207,7 @@ object Factorial {
     }
   }
 
+  //Should be Level2
   def level2(n: Int) = {
     n match {
       case 0 => Class1Level2
@@ -183,6 +216,7 @@ object Factorial {
     }
   }
 
+  //Should be Level1
   def level12(n: Int, g: String) = {
     n match {
       case 0 => Class1Level2
