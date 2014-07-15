@@ -100,7 +100,8 @@ trait MyAnalyzer extends Analyzer {
     }
 
     override def typed(tree: Tree, mode: Int, pt: Type): Tree = {
-      tree match {
+
+      val res: Tree = tree match {
         case ident @ Ident(s) =>
           try {
             super.typed(tree, mode, pt)
@@ -108,11 +109,15 @@ trait MyAnalyzer extends Analyzer {
             case e: CyclicReference =>
               cyclicReferences = ident :: cyclicReferences
               UnTyper.traverse(ident)
+              //              reporter.resets
               ident
           }
         case _ =>
-          super.typed(tree, mode, pt)
+          val res = super.typed(tree, mode, pt)
+          res
       }
+      reporter.reset
+      res
     }
   }
 

@@ -23,7 +23,7 @@ object Compile {
   def main(args: Array[String]) {
     import scala.reflect.runtime.universe._
 
-    val file = scala.reflect.io.AbstractFile.getFile("/home/csajka/svn_repos/scala_recur/scala_recur/compile_poc/factorial.scalatest")
+    val file = scala.reflect.io.AbstractFile.getFile("/home/naandi/projects/scala_recur/compile_poc/factorial.scalatest")
     //    compileAllPhasesAtOnce(file)
     compilePhaseByPhase(file)
   }
