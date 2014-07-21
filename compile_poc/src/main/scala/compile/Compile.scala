@@ -17,12 +17,14 @@ object Compile {
   settings.bootclasspath.value = Utils.libPath.mkString(File.pathSeparator)
   settings.classpath.value = Utils.libPath.mkString(File.pathSeparator)
 
-  val reporter = new ConsoleReporter(settings)
-  val global = new Global(settings, reporter) with RecursiveFunctions
+  val reporter = new ConsoleReporter(settings) with ReporterSilentAdvice
+  reporter.silent = true; // make error logs disappear. Dirty hack!
+
+  val global = new Global(settings, reporter) with RecursiveFunctionsGlobal
 
   def main(args: Array[String]) {
+    val file = scala.reflect.io.AbstractFile.getFile(new java.io.File(".").getCanonicalPath + "/testcases.txt")
     import scala.reflect.runtime.universe._
-    val file = scala.reflect.io.AbstractFile.getFile(new java.io.File(".").getCanonicalPath + "/factorial.scalatest")
 
     //    compileAllPhasesAtOnce(file)
     compilePhaseByPhase(file)

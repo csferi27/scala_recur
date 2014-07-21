@@ -4,13 +4,14 @@ import scala.tools.nsc.typechecker.Analyzer
 import scala.tools.nsc.Global
 import scala.annotation.tailrec
 import scala.reflect.api.Types
+import sun.util.logging.resources.logging
 
-trait MyAnalyzer extends Analyzer {
+trait CustomAnalyzer extends Analyzer {
   selfAnalyser =>
   val global: Global
   var cyclicReferences: List[global.Ident] = Nil
 
-  class MyTyper(context: Context) extends selfAnalyser.Typer(context) {
+  class CustomTyper(context: Context) extends selfAnalyser.Typer(context) {
     import global._
 
     override def typedDefDef(defDef: DefDef): DefDef = {
@@ -122,7 +123,7 @@ trait MyAnalyzer extends Analyzer {
   }
 
   override def newTyper(context: Context): Typer = {
-    new MyTyper(context)
+    new CustomTyper(context)
   }
 
 }

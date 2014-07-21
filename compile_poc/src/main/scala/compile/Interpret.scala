@@ -11,13 +11,20 @@ object Interpret {
   val settings = new Settings
   settings.bootclasspath.value = Utils.libPath.mkString(File.pathSeparator)
   settings.classpath.value = Utils.libPath.mkString(File.pathSeparator)
-  settings.Yreplsync.value = true;
+  settings.Yreplsync.value = true; // make error logs disappear. Dirty hack!
 
   val loop = new ILoop with RecursiveFunctionsInterpreter
+  loop.silent = true;
 
   def main(args: Array[String]) {
-    //    loop.reporter
-    loop.process(settings)
+    if (args.length != 0) {
+      //      println("Setting from command line");
+      loop.process(args) // setting REPL from command line
+
+    } else {
+      //      println("Setting default");
+      loop.process(settings)
+    }
     loop.loop
   }
 
