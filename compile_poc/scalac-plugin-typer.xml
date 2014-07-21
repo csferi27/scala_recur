@@ -1,4 +1,0 @@
-<plugin>
-  <name>facttyper</name>
-  <classname>compileutils.FactorialTyper</classname>
-</plugin>
