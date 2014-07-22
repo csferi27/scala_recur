@@ -18,7 +18,8 @@ object Compile {
   settings.classpath.value = Utils.libPath.mkString(File.pathSeparator)
 
   val reporter = new ConsoleReporter(settings) with ReporterSilentAdvice
-  reporter.silent = true; // make error logs disappear. Dirty hack!
+  //  reporter.silent = true; // make error logs disappear. Dirty hack!
+  reporter.silent = false; // make error logs disappear. Dirty hack!
 
   val global = new Global(settings, reporter) with RecursiveFunctionsGlobal
 

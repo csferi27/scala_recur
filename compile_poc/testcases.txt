@@ -8,14 +8,28 @@ object Factorial {
  //          returnRec(accumulator * number, number - 1)
  // }
  
- /* //Should be long
+ 
+  implicit class TrippleAble(val value: Long) extends AnyVal{
+  	def makeItTripple : Long = value*3
+  }
+ 
+  //Should be long
+  def addReverseWithImpl(n: Int) = {
+    n match {
+      case 0 => 0
+      case 1 => 2L
+      case n => 2 + addReverseWithImpl(n - 1).makeItTripple 
+    }
+  }  
+ 
+  //Should be long
   def factAddReverse(n: Int) = {
     n match {
       case 0 => 0
       case 1 => 2L
       case n => 2 + factAddReverse(n - 1) 
     }
-  }  */
+  }  
   
   //Should be double
   def factAdd(n: Int) = {
@@ -52,13 +66,8 @@ object Factorial {
     }
   }
  
-  class Level1
-  case object Class1Level1 extends Level1
-  case object Class2Level1 extends Level1
-  class Level2 extends Level1
-  case object Class1Level2 extends Level2
-  case object Class2Level2 extends Level2
-
+ 
+  
   //Should be Level1
   def deepRec(n: Int) = {
     if (n == 0) Class1Level2

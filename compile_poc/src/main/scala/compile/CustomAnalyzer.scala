@@ -5,10 +5,15 @@ import scala.tools.nsc.Global
 import scala.annotation.tailrec
 import scala.reflect.api.Types
 import sun.util.logging.resources.logging
+import scala.collection.mutable
 
 trait CustomAnalyzer extends Analyzer {
   selfAnalyser =>
   val global: Global
+
+  import global._
+  import definitions._
+
   var cyclicReferences: List[global.Ident] = Nil
 
   class CustomTyper(context: Context) extends selfAnalyser.Typer(context) {
@@ -20,6 +25,8 @@ trait CustomAnalyzer extends Analyzer {
         val msym = dd.symbol.asMethod
         msym.reset(MethodType(msym.paramss.flatten, dtype))
         dd.setSymbol(msym)
+        dd.tpe = dtype;
+        dd.tpt.tpe = dtype;
       }
 
       def deleteDefDefType(dd: DefDef): Unit = {
@@ -40,7 +47,7 @@ trait CustomAnalyzer extends Analyzer {
         val res = tree match {
           case iff @ If(cond: Tree, thenp: Tree, elsep: Tree) => thenp :: elsep :: Nil
           case mmatch @ Match(selector: Tree, cases: List[CaseDef]) => cases.flatMap(collectReturnBranches)
-          case block @ Block(stats: List[Tree], expr: Tree) => stats.last :: Nil
+          case block @ Block(stats: List[Tree], expr: Tree) => expr :: Nil
           case defdef @ DefDef(mods: Modifiers, name: Name, tparams: List[TypeDef], vparamss: List[List[ValDef]], tpt: Tree, rhs: Tree) => rhs :: Nil
           case label @ LabelDef(sym, params, rhs) => rhs :: Nil
           case cased @ CaseDef(pat: Tree, guard: Tree, body: Tree) => body :: Nil
@@ -62,32 +69,43 @@ trait CustomAnalyzer extends Analyzer {
           //lub of method's current type and correctly branches 
           val lub = ptOrLub(typesWithPt, NoType)._1
 
-          //treeBrowser.browse(ddef) //Show the tree
+          //Retype Literals as they are errorneous if there is a type mismatch
+          val retypedLiterals =
+            if (errorneousReturnBranches.exists(t => t.isInstanceOf[Ident] || t.isInstanceOf[Literal])) {
+              errorneousReturnBranches.filter(t => t.isInstanceOf[Ident] || t.isInstanceOf[Literal]).map(
+                b => {
+                  UnTyper.traverse(b); typed(b);
+                })
+            } else Nil
+
           updateDefDefType(defDef, lub)
 
           val retypedErrMethodCalls = errorneousReturnBranches.filter(t => t.isInstanceOf[Apply] || t.isInstanceOf[Select]).map(
             b => {
-              //              println("Retyping" + b);
               UnTyper.traverse(b); typed(b)
             })
 
           val retypedOkMethodCalls = retypedErrMethodCalls.filter(!_.exists(_.isErroneous))
 
           // lub updated with types of retyped errorneous method calls
-          val retypedLub = ptOrLub(lub :: retypedOkMethodCalls.map(_.tpe), NoType)._1
+          val retypedLub = ptOrLub(lub :: retypedOkMethodCalls.map(_.tpe) ::: retypedLiterals.map(_.tpe), NoType)._1
           val errorneousReturnBranchesTypes = errorneousReturnBranches.map(deduceType(_, retypedLub))
 
-          ptOrLub((retypedLub :: errorneousReturnBranchesTypes).filter(isNotNoTypeOrNothing), NoType)._1
+          val res = ptOrLub((retypedLub :: errorneousReturnBranchesTypes).filter(isNotNoTypeOrNothing), NoType)._1
+          res
         } else pt
       }
-
       val typedDef = super.typedDefDef(defDef)
-      if (typedDef.exists(t => cyclicReferences.contains(t)) && typedDef.exists(_.isErroneous)) {
+      val typedDefWithoutImpl = context.withImplicitsDisabled(super.typedDefDef(defDef))
 
-        deleteDefDefType(typedDef)
-        val newType = deduceType(typedDef, NoType)
+      //Check whether default typing was succesfull, if not do retyping on tree typed with implicits disabled!!
+      if (typedDef.exists(t => cyclicReferences.contains(t)) && typedDef.exists(_.isErroneous)) {
+        println("retyping def def");
+        //        updateDefDefType(defDef, typeOf[Nothing])
+        deleteDefDefType(defDef)
+        val newType = deduceType(typedDefWithoutImpl, NoType)
         val ident = Ident(newType.typeSymbol)
-        UnTyper.traverse(typedDef)
+        UnTyper.traverse(typedDefWithoutImpl)
 
         val msym = defDef.symbol.asMethod
         msym.reset(MethodType(msym.paramss.flatten, newType))
@@ -101,7 +119,6 @@ trait CustomAnalyzer extends Analyzer {
     }
 
     override def typed(tree: Tree, mode: Int, pt: Type): Tree = {
-
       val res: Tree = tree match {
         case ident @ Ident(s) =>
           try {
@@ -110,16 +127,18 @@ trait CustomAnalyzer extends Analyzer {
             case e: CyclicReference =>
               cyclicReferences = ident :: cyclicReferences
               UnTyper.traverse(ident)
-              //              reporter.resets
               ident
           }
+
         case _ =>
           val res = super.typed(tree, mode, pt)
           res
       }
+      //Hack, makes modified repl work
       reporter.reset
       res
     }
+
   }
 
   override def newTyper(context: Context): Typer = {
