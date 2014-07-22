@@ -69,30 +69,21 @@ trait CustomAnalyzer extends Analyzer {
           //lub of method's current type and correctly branches 
           val lub = ptOrLub(typesWithPt, NoType)._1
 
-          //Retype Literals as they are errorneous if there is a type mismatch
+          //Retype Literals on return branches as they are errorneous if there is a type mismatch
           val retypedLiterals =
-            if (errorneousReturnBranches.exists(t => t.isInstanceOf[Ident] || t.isInstanceOf[Literal])) {
-              errorneousReturnBranches.filter(t => t.isInstanceOf[Ident] || t.isInstanceOf[Literal]).map(
-                b => {
-                  UnTyper.traverse(b); typed(b);
-                })
-            } else Nil
+            errorneousReturnBranches.filter(_.isInstanceOf[Literal]).map(
+              b => { UnTyper.traverse(b); typed(b); }).filter(!_.isErroneous)
 
           updateDefDefType(defDef, lub)
 
-          val retypedErrMethodCalls = errorneousReturnBranches.filter(t => t.isInstanceOf[Apply] || t.isInstanceOf[Select]).map(
-            b => {
-              UnTyper.traverse(b); typed(b)
-            })
-
-          val retypedOkMethodCalls = retypedErrMethodCalls.filter(!_.exists(_.isErroneous))
+          val retypedOkMethodCalls = errorneousReturnBranches.filter(t => t.isInstanceOf[Apply] || t.isInstanceOf[Select]).map(
+            b => { UnTyper.traverse(b); typed(b); }).filter(!_.exists(_.isErroneous))
 
           // lub updated with types of retyped errorneous method calls
           val retypedLub = ptOrLub(lub :: retypedOkMethodCalls.map(_.tpe) ::: retypedLiterals.map(_.tpe), NoType)._1
           val errorneousReturnBranchesTypes = errorneousReturnBranches.map(deduceType(_, retypedLub))
 
-          val res = ptOrLub((retypedLub :: errorneousReturnBranchesTypes).filter(isNotNoTypeOrNothing), NoType)._1
-          res
+          ptOrLub((retypedLub :: errorneousReturnBranchesTypes).filter(isNotNoTypeOrNothing), NoType)._1
         } else pt
       }
       val typedDef = super.typedDefDef(defDef)
@@ -100,8 +91,6 @@ trait CustomAnalyzer extends Analyzer {
 
       //Check whether default typing was succesfull, if not do retyping on tree typed with implicits disabled!!
       if (typedDef.exists(t => cyclicReferences.contains(t)) && typedDef.exists(_.isErroneous)) {
-        println("retyping def def");
-        //        updateDefDefType(defDef, typeOf[Nothing])
         deleteDefDefType(defDef)
         val newType = deduceType(typedDefWithoutImpl, NoType)
         val ident = Ident(newType.typeSymbol)

@@ -144,6 +144,12 @@ object Factorial {
       case p                              => find(List(p), Map())
     }
   }
+  class Level1
+  case object Class1Level1 extends Level1
+  case object Class2Level1 extends Level1
+  class Level2 extends Level1
+  case object Class1Level2 extends Level2
+  case object Class2Level2 extends Level2
 
   //Should be Level2
   def multipleCalls2(n: Int, g: String) = {
