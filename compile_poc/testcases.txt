@@ -8,7 +8,7 @@ object Factorial {
  //          returnRec(accumulator * number, number - 1)
  // }
  
- 
+ /*
   implicit class TrippleAble(val value: Long) extends AnyVal{
   	def makeItTripple : Long = value*3
   }
@@ -257,5 +257,20 @@ object Factorial {
       case n => level12(n - 1, "AAA")
     }
   }
+  */
+  class A { 
+    def toC(): C = new C
+    def toD(): D = new D
+  }
   
+  class B extends A 
+  class C extends A 
+  class D extends A
+  
+  def multi(n: Int) = n match {
+    case x:Int if  (x > 0) => multi(x - 1).toC()
+    case 0 => new B
+    case x:Int if  (x < 0) => multi(x + 1).toD()
+  }
+     
 }

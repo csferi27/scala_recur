@@ -58,6 +58,11 @@ trait CustomAnalyzer extends Analyzer {
         res.filter(t => isNotNoTypeOrNothing(t.tpe))
       }
 
+      def untype(tree: Tree): Unit = {
+        if (tree != EmptyTree) tree.tpe = null
+        if (tree.hasSymbol) tree.symbol = NoSymbol
+      }
+
       def deduceType(tree: Tree, pt: Type): Type = {
         if (!tree.children.isEmpty) {
           val returnBranches = collectReturnBranches(tree)
@@ -70,15 +75,45 @@ trait CustomAnalyzer extends Analyzer {
           val lub = ptOrLub(typesWithPt, NoType)._1
 
           //Retype Literals on return branches as they are errorneous if there is a type mismatch
+          updateDefDefType(defDef, typeOf[Any])
+
           val retypedLiterals =
             errorneousReturnBranches.filter(_.isInstanceOf[Literal]).map(
               b => { UnTyper.traverse(b); typed(b); }).filter(!_.isErroneous)
 
+          //          treeBrowser.browse(tree) //Show the tree
+          //          tree.filter(_.isErroneous).foreach(untype(_))
+          //          val rrtree = typed(tree)
+          //          treeBrowser.browse(rrtree) //Show the tree
           updateDefDefType(defDef, lub)
+          val retypedOkMethodCalls: List[Tree] = Nil
+          //          val retypedOkMethodCalls: List[Tree] = //errorneousReturnBranches.map(typed(_)).filter(!_.isErroneous)
+          //
+          //            errorneousReturnBranches
+          //              .filter(t =>
+          //                t.isInstanceOf[Apply] || t.isInstanceOf[Select])
+          //              .map(
+          //                b => {
+          //                  //                  context.
+          //                  //                  UnTyper.traverse(b);
+          //                  b.filter(_.isErroneous).foreach(untype(_))
+          //                  //                  treeBrowser.browse(b) //Show the tree
+          //                  val r = typed(b);
+          //                  //                  treeBrowser.browse(b) //Show the tree
+          //
+          //                  r
+          //                  //                }).filter(!_.exists(_.isErroneous))
+          //                }) //.filter(!_.isErroneous)
+          println(errorneousReturnBranches)
+          //          errorneousReturnBranches.foreach(treeBrowser.browse(_))
+          val fff = errorneousReturnBranches
+            .filter(_.isInstanceOf[Ident])
+            .filter(b => b.exists(e => cyclicReferences.exists(c => c.name == e.asInstanceOf[Ident].name)))
+          println(fff)
+          //          println(retypedOkMethodCalls);
+          //          println(retypedOkMethodCalls.map(_.symbol));
 
-          val retypedOkMethodCalls = errorneousReturnBranches.filter(t => t.isInstanceOf[Apply] || t.isInstanceOf[Select]).map(
-            b => { UnTyper.traverse(b); typed(b); }).filter(!_.exists(_.isErroneous))
-
+          updateDefDefType(defDef, lub)
           // lub updated with types of retyped errorneous method calls
           val retypedLub = ptOrLub(lub :: retypedOkMethodCalls.map(_.tpe) ::: retypedLiterals.map(_.tpe), NoType)._1
           val errorneousReturnBranchesTypes = errorneousReturnBranches.map(deduceType(_, retypedLub))
@@ -86,22 +121,29 @@ trait CustomAnalyzer extends Analyzer {
           ptOrLub((retypedLub :: errorneousReturnBranchesTypes).filter(isNotNoTypeOrNothing), NoType)._1
         } else pt
       }
+
       val typedDef = super.typedDefDef(defDef)
       val typedDefWithoutImpl = context.withImplicitsDisabled(super.typedDefDef(defDef))
 
       //Check whether default typing was succesfull, if not do retyping on tree typed with implicits disabled!!
       if (typedDef.exists(t => cyclicReferences.contains(t)) && typedDef.exists(_.isErroneous)) {
+        println("Reyping def def");
+        //        treeBrowser.browse(defDef) //Show the tree
         deleteDefDefType(defDef)
         val newType = deduceType(typedDefWithoutImpl, NoType)
         val ident = Ident(newType.typeSymbol)
+        //        treeBrowser.browse(defDef) //Show the tree
+        //        treeBrowser.browse(typedDefWithoutImpl) //Show the tree
+        //        UnTyper.traverse(defDef)
         UnTyper.traverse(typedDefWithoutImpl)
 
         val msym = defDef.symbol.asMethod
         msym.reset(MethodType(msym.paramss.flatten, newType))
 
         val defCopy = treeCopy.DefDef(defDef, defDef.mods, defDef.name, defDef.tparams, defDef.vparamss, ident, defDef.rhs)
+        //        updateDefDefType(defDef, typeOf[Any])
         val res = super.typedDefDef(defCopy)
-        //        treeBrowser.browse(res) //Show the tree
+        treeBrowser.browse(res) //Show the tree
         res
       } else
         typedDef
