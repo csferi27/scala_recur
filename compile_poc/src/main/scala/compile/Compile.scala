@@ -4,7 +4,6 @@ import scala.tools.nsc.reporters.ConsoleReporter
 import scala.tools.nsc.Settings
 import scala.tools.nsc.Global
 import scala.reflect.io.File
-import ch.epfl.lamp.compiler.msil.Type
 import scala.reflect.internal.Types
 import scala.reflect.internal.util.SourceFile
 import scala.reflect.internal.util.BatchSourceFile
