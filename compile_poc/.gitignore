@@ -1,0 +1,10 @@
+/target
+/classes
+/factparser.jar
+/facttyper.jar
+/ast
+.cache
+.classpath
+.project
+.settings/
+*.jad
