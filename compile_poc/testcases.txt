@@ -66,7 +66,24 @@ object Factorial {
     }
   }
  
+ case class C
+ case class A extends C
+ case class B extends C
+
+ def foo(n: Int): C = n match {
+	case 0 => new A
+	case 1 => new B
+	case _ => foo(n-1)
+}
  
+ 
+ def fact2(n: Int) = {
+    n match {
+      case 0 => 1
+      case 1 => 1L
+      case n => n * fact2(n - 1)
+    }
+  }
   
   //Should be Level1
   def deepRec(n: Int) = {
