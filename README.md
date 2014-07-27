@@ -14,4 +14,4 @@ Both of them can be run as a regular scala application from IDE or command-line.
 Gergely Nagy (njeasus@caesar.elte.hu)   
 Gábor Oláh (olikas@caesar.elte.hu)   
 Zoltán Porkoláb (gsd@caesar.elte.hu)   
-František Csajka (csferi27gmail.com)   
+František Csajka (csferi27@gmail.com)   
