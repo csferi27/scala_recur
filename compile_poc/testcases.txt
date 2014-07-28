@@ -66,14 +66,14 @@ object Factorial {
     }
   }
  
- case class C
- case class A extends C
- case class B extends C
+ class C
+ class A extends C
+ class B extends C
 
- def foo(n: Int): C = n match {
-	case 0 => new A
-	case 1 => new B
-	case _ => foo(n-1)
+ def foo(n: Int):C = n match {
+    case 0 => new A
+    case 1 => new B
+    case _ => foo(n-1)
 }
  
  
